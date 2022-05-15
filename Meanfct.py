@@ -19,24 +19,3 @@ class DNN(torch.nn.Module):
         x = self.out(x)
 
         return x
-
-DNN_reg = DNN(input_dim=5)
-
-print('The model:')
-print(DNN_reg)
-
-print('\n\nJust one layer:')
-print(DNN_reg.linear2)
-
-print('\n\nModel params:')
-for param in DNN_reg.parameters():
-    print(param)
-
-print('\n\nLayer params:')
-for param in DNN_reg.linear2.parameters():
-    print(param)
-
-
-print(DNN_reg(torch.rand(100,5)))
-
-torch.rand(2,4,5)
