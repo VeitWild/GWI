@@ -11,7 +11,8 @@ class Wasserstein_Distance(Prob_Metric_abstract):
     def __init__(self,GM1,GM2):
         self.GM1 = GM1
         self.GM2 = GM2
-    def calculate_distance(self,X_S,X_B):
+
+    def calculate_distance(self,X_S,X_B,components=False):
 
         N_S = X_S.size(0)
         N_B = X_B.size(0)
@@ -33,11 +34,13 @@ class Wasserstein_Distance(Prob_Metric_abstract):
 
         #Eigenvalues
         eigenvalues = torch.linalg.eigvals(r_XSXB@k_XBXS+100*torch.eye(N_S)).real -100*torch.ones(N_S)
-
         eigenvalues[eigenvalues<0]=0
 
-        #Wassersteindistance
-        WD_squared = mean_dist + aver_trace_k + aver_trace_r - 2/((N_B*N_S)**0.5) * torch.sqrt(eigenvalues).sum()
+        if components == True:
+            ret = [m_P,m_Q,aver_trace_k,aver_trace_r,eigenvalues] # components to calculate WD
+        
+        else :
+            ret = mean_dist + aver_trace_k + aver_trace_r - 2/((N_B*N_S)**0.5) * torch.sqrt(eigenvalues).sum() #Wassersteindistance
 
 
-        return WD_squared
+        return ret

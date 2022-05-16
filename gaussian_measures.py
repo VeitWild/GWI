@@ -35,11 +35,14 @@ class GM_GWI_net(GM_abstract):
     def __init__(self,GM_prior,m_var,landmark_points):
         self.GM_prior = GM_prior
         self.m_var = m_var
-        self.landmark_points = landmark_points
         self.k_ZZ = self.GM_prior.covariance_matrix(landmark_points,landmark_points) #cache at initiliasation
-        self.cholesky_k_ZZ = torch.linalg.cholesky(self.k_ZZ) #cache at initialisation
+        print(self.k_ZZ)
 
-        self.cholesky_sigma_matrix = torch.ones(landmark_points.size(0))
+        self.cholesky_k_ZZ = torch.linalg.cholesky(self.k_ZZ) #cache at initialisation        
+        self.landmark_points = landmark_points
+
+        #Define Variational Paramters
+        self.cholesky_sigma_matrix = torch.nn.Parameter(torch.tril(torch.eye(landmark_points.size(0)))) #maybe intiialise properly here already?
     
     def mean(self,X):
         return self.GM_prior.mean(X) + self.m_var(X)
