@@ -44,11 +44,11 @@ def initialise_prior(train_x,train_y,training_iter,kernel_prior,sigma2_0=1):
         # Calc loss and backprop gradients
         loss = -mll(output, train_y)
         loss.backward()
-        print('Iter %d/%d - Loss: %.3f   lengthscale: %.3f   noise: %.3f' % (
-            i + 1, training_iter, loss.item(),
-            model.covar_module.base_kernel.lengthscale.item(),
-            model.likelihood.noise.item()
-        ))
+        #print('Iter %d/%d - Loss: %.3f   lengthscale: %.3f   noise: %.3f' % (
+        #    i + 1, training_iter, loss.item(),
+        #    model.covar_module.base_kernel.lengthscale.item(),
+        #    model.likelihood.noise.item()
+        #))
         optimizer.step()
 
     return model.likelihood.noise.item()
