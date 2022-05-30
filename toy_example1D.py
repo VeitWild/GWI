@@ -15,7 +15,7 @@ from utils import make_deterministic
 seed = 42
 make_deterministic(seed)
 
-# torch.autograd.set_detect_anomaly(True)
+#torch.autograd.set_detect_anomaly(True)
 
 ###     Simulate some data
 N = 200
@@ -24,9 +24,10 @@ N_train = math.ceil(0.9 * N)
 
 # M=math.ceil(N**0.5)
 M = int(N_train**0.5)
+M = 12
 sigma_true = 0.5
 
-X = np.linspace(-3, 7, N, dtype=np.float32).reshape(N, 1)
+X = np.linspace(-2, 2, N, dtype=np.float32).reshape(N, 1)
 input_dim = X.shape[1]
 Y = (
     (
@@ -94,6 +95,8 @@ print("kernel_outputscale: ", GM_prior.kernel.outputscale.item())
 m_Q = meanfct.DNN(input_dim=input_dim)
 GM_var = GM.GM_GWI_net(GM_prior=GM_prior, m_var=m_Q, landmark_points=Z)
 
+
+
 # Intialse Covariance Matrix with batch of X
 N_B = 100
 N_S = 100
@@ -106,7 +109,7 @@ X_S = X_train[
     torch.ones(N_train).multinomial(num_samples=N_S, replacement=False),
 ]
 
-GM_var.initialise_Sigma_matrix(X=X_batch, N=N_train, sigma2=sigma2)
+GM_var.initialise_L_matrix(X=X_batch, N=N_train, sigma2=sigma2)
 
 # Calculate Wasserstein Distance
 WD = probability_metrics.Wasserstein_Distance(GM_prior, GM_var)
@@ -114,10 +117,6 @@ WD = probability_metrics.Wasserstein_Distance(GM_prior, GM_var)
 # print(WD.calculate_distance(X_S=X_S,X_B=X_batch))
 
 # print(GM_var.get_var_parameters())
-
-
-# for p in GM_var.parameters():
-#   print(p)
 
 ###Probably nneed to concatenate all parameters now with
 # print(GWI_loss.parameters())
@@ -133,12 +132,14 @@ WD = probability_metrics.Wasserstein_Distance(GM_prior, GM_var)
 
 GWI_loss = generalised_loss.GWI_regression_loss(GM_prior, GM_var, sigma2, N_train)
 
+#for p in GM_var.parameters():
+#   print(p)
+
 opt = torch.optim.Adam(GM_var.parameters(), lr=0.1)
 
 
 print("loss at start", GWI_loss.calculate_loss(X_batch, X_S, Y_batch))
 epochs = 50
-lower = torch.tril(torch.ones(M, M))
 
 for epoch in range(epochs):
     for i in range((N_train - 1) // N_B + 1):
@@ -160,14 +161,17 @@ for epoch in range(epochs):
         # print('loss loop:',loss)
         # print('i',i)
 
-        print("Cholesky_matrix before step", GM_var.cholesky_sigma_matrix)
-        # print(GM_var.cholesky_sigma_matrix.grad)
+        #print(GM_var.L_diag_unconst)
+        print(GM_var.L_lower)
 
         loss.backward()
-        print(GM_var.cholesky_sigma_matrix.grad)
-        print(GM_var.m_var.linear1.weight.grad)
+
+        #print("weight_grad", GM_var.m_var.linear1.weight.grad)
+        #print(GM_var.L_diag_unconst.grad)
+        print(GM_var.L_lower.grad)
         opt.step()
 
-        print("Cholesky_matrix after step", GM_var.cholesky_sigma_matrix)
+        print("L_diag after step", GM_var.L_diag_unconst)
+        print("L_lower after step", GM_var.L_lower)
 
 print("loss in the end:", GWI_loss.calculate_loss(X_batch, X_S, Y_batch))
