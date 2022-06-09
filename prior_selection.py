@@ -1,6 +1,27 @@
 import torch
 import gpytorch
 import math
+import sys
+import tensorflow as tf
+import gpflow
+import numpy as np
+from gpflow.utilities import print_summary
+sys.path.append("../")
+from RobustGP import robustgp
+
+
+#init_method = robustgp.ConditionalVariance()
+M = 10  # We choose 250 inducing variables
+X = np.random.rand(1000, 2)
+#print(X)
+k = gpflow.kernels.SquaredExponential(variance=2.5,lengthscales=[0.1, 0.2])
+print_summary(k)
+
+# Initialise hyperparameters here
+init_method = robustgp.ConditionalVariance()
+Z = init_method.compute_initialisation(X, M, k)[0]
+print(Z)
+
 
 # We will use the simplest form of GP model, exact inference
 class ExactGPModel(gpytorch.models.ExactGP):
@@ -24,6 +45,23 @@ def initialise_prior(train_x,train_y,training_iter,kernel_prior,sigma2_0=1):
 
 
     model = ExactGPModel(train_x, train_y, likelihood,kernel=kernel_prior)
+
+    ###Intialise the initialisation of prior hyperparameters
+    
+
+    hypers = {
+    'likelihood.noise_covar.noise': torch.tensor(1.),
+    'covar_module.base_kernel.lengthscale': torch.tensor(0.5),
+    'covar_module.outputscale': torch.tensor(2.),
+    }
+
+    model.initialize(**hypers)
+
+    print(
+        model.likelihood.noise_covar.noise.item(),
+        model.covar_module.base_kernel.lengthscale.item(),
+        model.covar_module.outputscale.item()
+    )
 
 
     # Find optimal model hyperparameters
